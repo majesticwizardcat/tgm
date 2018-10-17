@@ -1,0 +1,5 @@
+0.1.0: Basic functionality:
+	- Neural networks.
+	- Simple genetic algorithm.
+	- Basic GUI and terminal output.
+	- Basic thread synchronization (Still thread unsafe methods).
