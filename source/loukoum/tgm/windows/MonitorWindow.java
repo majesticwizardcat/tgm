@@ -1,189 +1,173 @@
 package loukoum.tgm.windows;
 
 import java.awt.BorderLayout;
-import java.awt.Dimension;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.GridLayout;
+import java.text.NumberFormat;
 
+import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JFormattedTextField;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JTextField;
+import javax.swing.Timer;
+import javax.swing.UIManager;
+import javax.swing.text.NumberFormatter;
 
 import loukoum.tgm.TGM;
 import loukoum.tgm.parts.Brain;
 
 public class MonitorWindow extends JFrame {
-
-	public static final int WIDTH = 400;
-	public static final int HEIGHT = 300;
-
-	public static final int PADDING = 10;
-	public static final int SCORE_X = PADDING;
-	public static final int SCORE_Y = PADDING;
-	public static final int SCORE_W = WIDTH - 2 * PADDING;
-	public static final int SCORE_H = 30;
-	public static final int FITNESS_X = PADDING;
-	public static final int FITNESS_Y = SCORE_Y + SCORE_H + PADDING;
-	public static final int FITNESS_W = WIDTH - 2 * PADDING;
-	public static final int FITNESS_H = 30;
-	public static final int COMPLETION_X = PADDING;
-	public static final int COMPLETION_Y = FITNESS_Y + FITNESS_H + PADDING;
-	public static final int COMPLETION_W = WIDTH - 2 * PADDING;
-	public static final int COMPLETION_H = 30;
-	public static final int SPEED_MUL_X = PADDING;
-	public static final int SPEED_MUL_Y = COMPLETION_Y + COMPLETION_H + PADDING;
-	public static final int SPEED_MUL_W = WIDTH / 3 - 2 * PADDING;
-	public static final int SPEED_MUL_H = 30;
-	public static final int SPEED_MUL_FIELD_X = SPEED_MUL_X + SPEED_MUL_W + PADDING;
-	public static final int SPEED_MUL_FIELD_Y = SPEED_MUL_Y;
-	public static final int SPEED_MUL_FIELD_W = WIDTH / 3 - 2 * PADDING;
-	public static final int SPEED_MUL_FIELD_H = 30;
-	public static final int SPEED_MUL_BUTTON_X = PADDING + SPEED_MUL_FIELD_W + SPEED_MUL_FIELD_X;
-	public static final int SPEED_MUL_BUTTON_Y = SPEED_MUL_Y;
-	public static final int SPEED_MUL_BUTTON_W = WIDTH / 3 - 2 * PADDING;
-	public static final int SPEED_MUL_BUTTON_H = 30;
-	public static final int CONTROLS_X = PADDING;
-	public static final int CONTROLS_Y = SPEED_MUL_Y + SPEED_MUL_H + PADDING;
-	public static final int BUTTON_W = 80;
-	public static final int BUTTON_H = 30;
-	public static final int PLAY_X = CONTROLS_X;
-	public static final int PLAY_Y = CONTROLS_Y;
-	public static final int TRAIN_X = PLAY_X + BUTTON_W + PADDING;
-	public static final int TRAIN_Y = CONTROLS_Y;
-	public static final int STOP_X = TRAIN_X + BUTTON_W + PADDING;
-	public static final int STOP_Y = CONTROLS_Y;
+	private static final long serialVersionUID = 2006075407585592740L;
+	private static final int FRAME_WIDTH = 420;
+	private static final int FRAME_HEIGHT = 300;
+	private static final int FONT_SIZE = 16;
 
 	private Brain brain;
 	private TGM tgm;
-
-	private JLabel score;
-	private JLabel fitness;
-	private JLabel completion;
-	private JLabel speedMult;
-	
-	private JTextField speedMultField;
+	private JLabel generationLabel;
+	private JLabel bestScoreLabel;
+	private JLabel AVGLabel;
+	private JLabel bestFitnessLabel;
+	private JLabel AVGFitnessLabel;
+	private JLabel completionLabel;
+	private JLabel speedMultLabel;
+	private JFormattedTextField speedMultField;
 
 	public MonitorWindow(Brain brain, TGM tgm) {
 		this.brain = brain;
 		this.tgm = tgm;
-
+		setUpUIManager();
 		createWindow();
+		setFontToAllComponents(getContentPane());
+		createRefreshTimer();
+	}
+
+	private void setFontToAllComponents(Container c) {
+		for (Component comp : c.getComponents()) {
+			if (comp instanceof JPanel)
+				setFontToAllComponents((Container) comp);
+			else
+				comp.setFont(new Font("Tahoma", 0, FONT_SIZE));
+		}
+	}
+
+	private void createRefreshTimer() {
+		// javax.swing.Timer
+		Timer t = new Timer(1000, e -> updateWindow());
+		t.start();
 	}
 
 	private void createWindow() {
 		setTitle(brain.getName() + " " + TGM.VERSION);
-		setLayout(new BorderLayout());
-		setSize(WIDTH, HEIGHT);
-		setResizable(false);
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
+		getContentPane().setLayout(new BorderLayout());
+		getContentPane().add(createMainPanel(), BorderLayout.PAGE_START);
+		setSize(FRAME_WIDTH, FRAME_HEIGHT);
 		setVisible(true);
+	}
 
-		JPanel panel = new JPanel();
-		panel.setLayout(null);
-		panel.setSize(WIDTH, HEIGHT);
-		panel.setPreferredSize(new Dimension(WIDTH, HEIGHT));
+	private JPanel createMainPanel() {
+		JPanel main = new JPanel();
+		main.setLayout(new BoxLayout(main, BoxLayout.Y_AXIS));
+		main.setBorder(BorderFactory.createEmptyBorder(5, 15, 5, 15)); // Some insets
+		main.add(createFieldsPanel());
+		completionLabel = new JLabel("Generation train: " + brain.getGenerationTrainPer());
+		completionLabel.setAlignmentX(JLabel.CENTER_ALIGNMENT);
+		main.add(completionLabel);
+		main.add(createSpeedMultPanel());
+		main.add(createActionsPanel());
+		return main;
+	}
 
-		score = new JLabel();
-		score.setLocation(SCORE_X, SCORE_Y);
-		score.setSize(SCORE_W, SCORE_H);
+	private JPanel createFieldsPanel() {
+		JPanel p = new JPanel(new GridLayout(0, 2));
+		// Panel with scores
+		JPanel scorePanel = new JPanel();
+		scorePanel.setBorder(BorderFactory.createTitledBorder("Score"));
+		scorePanel.setLayout(new BoxLayout(scorePanel, BoxLayout.Y_AXIS));
+		generationLabel = new JLabel("Generation: " + brain.getGeneration());
+		bestScoreLabel = new JLabel("Best Score: " + brain.getBestScore());
+		AVGLabel = new JLabel("AVG: " + brain.getAVGScore());
+		scorePanel.add(generationLabel);
+		scorePanel.add(bestScoreLabel);
+		scorePanel.add(AVGLabel);
+		p.add(scorePanel);
 
-		fitness = new JLabel();
-		fitness.setLocation(FITNESS_X, FITNESS_Y);
-		fitness.setSize(FITNESS_W, FITNESS_H);
+		// Panel with fitness
+		JPanel fitnessPanel = new JPanel();
+		fitnessPanel.setLayout(new BoxLayout(fitnessPanel, BoxLayout.Y_AXIS));
+		fitnessPanel.setBorder(BorderFactory.createTitledBorder("Fitness"));
+		bestFitnessLabel = new JLabel("Best Fitness: " + brain.getBestFitness());
+		AVGFitnessLabel = new JLabel("AVG: " + brain.getAVGFitness());
+		fitnessPanel.add(bestFitnessLabel);
+		fitnessPanel.add(AVGFitnessLabel);
+		p.add(fitnessPanel);
+		return p;
+	}
 
-		completion = new JLabel();
-		completion.setLocation(COMPLETION_X, COMPLETION_Y);
-		completion.setSize(COMPLETION_W, COMPLETION_H);
+	private JPanel createSpeedMultPanel() {
+		JPanel p = new JPanel(new FlowLayout(FlowLayout.CENTER));
+		speedMultLabel = new JLabel("Speed Multiplier: " + tgm.getSpeedMult());
+		p.add(speedMultLabel);
 
-		JButton play = new JButton("Play");
-		play.setLocation(PLAY_X, PLAY_Y);
-		play.setSize(BUTTON_W, BUTTON_H);
+		NumberFormat format = NumberFormat.getInstance();
+		NumberFormatter formatter = new NumberFormatter(format);
+		formatter.setValueClass(Integer.class);
+		formatter.setMinimum(0);
+		formatter.setMaximum(Integer.MAX_VALUE);
+		formatter.setAllowsInvalid(false);
+		formatter.setCommitsOnValidEdit(true);
+		speedMultField = new JFormattedTextField(formatter);
+		speedMultField.setColumns(10);
+		speedMultField.setText("1");
+		p.add(speedMultField);
 
-		play.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				tgm.play();
-			}
+		JButton setSpeedBtn = new JButton("Set");
+		setSpeedBtn.addActionListener(e -> {
+			tgm.changeMultSpeed(Integer.parseInt(speedMultField.getText()));
+			speedMultLabel.setText("Speed Multiplier: " + tgm.getSpeedMult());
 		});
+		p.add(setSpeedBtn);
+		return p;
+	}
 
-		JButton train = new JButton("Train");
-		train.setLocation(TRAIN_X, TRAIN_Y);
-		train.setSize(BUTTON_W, BUTTON_H);
+	private JPanel createActionsPanel() {
+		JPanel p = new JPanel(new FlowLayout(FlowLayout.CENTER));
 
-		train.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				tgm.train();
-			}
-		});
+		JButton playBtn = new JButton("Play");
+		playBtn.addActionListener(e -> tgm.play());
+		p.add(playBtn);
 
-		JButton stop = new JButton("Stop");
-		stop.setLocation(STOP_X, STOP_Y);
-		stop.setSize(BUTTON_W, BUTTON_H);
+		JButton trainBtn = new JButton("Train");
+		trainBtn.addActionListener(e -> tgm.train());
+		p.add(trainBtn);
 
-		stop.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				tgm.stopTraining();
-			}
-		});
-		
-		speedMult = new JLabel();
-		speedMult.setLocation(SPEED_MUL_X, SPEED_MUL_Y);
-		speedMult.setSize(SPEED_MUL_W, SPEED_MUL_H);
-		
-		speedMultField = new JTextField();
-		speedMultField.setLocation(SPEED_MUL_FIELD_X, SPEED_MUL_Y);
-		speedMultField.setSize(SPEED_MUL_FIELD_W, SPEED_MUL_H);
-
-		JButton setSpeed = new JButton("Set");
-		setSpeed.setLocation(SPEED_MUL_BUTTON_X, SPEED_MUL_BUTTON_Y);
-		setSpeed.setSize(SPEED_MUL_BUTTON_W, SPEED_MUL_BUTTON_H);
-
-		setSpeed.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				tgm.changeMultSpeed(Integer.parseInt(speedMultField.getText()));
-			}
-		});
-
-		panel.add(stop);
-		panel.add(score);
-		panel.add(fitness);
-		panel.add(completion);
-		panel.add(train);
-		panel.add(play);
-		panel.add(speedMult);
-		panel.add(speedMultField);
-		panel.add(setSpeed);
-
-		add(panel);
-
-		Thread t = new Thread() {
-			public void run() {
-				while (true) {
-					updateWindow();
-					try {
-						Thread.sleep(1000);
-					}catch (Exception e) {
-						e.printStackTrace();
-					}
-				}
-			}
-
-		};
-
-		t.start();
-
+		JButton stopBtn = new JButton("Stop");
+		stopBtn.addActionListener(e -> tgm.stopTraining());
+		p.add(stopBtn);
+		return p;
 	}
 
 	private void updateWindow() {
-		score.setText("Generation: " + brain.getGeneration() + " Best Score: " + brain.getBestScore() +
-				" AVG: " + brain.getAVGScore());
-		fitness.setText("Best Fitness: " + brain.getBestFitness() + " AVG: " + brain.getAVGFitness());
-		completion.setText("Generation train: " + brain.getGenerationTrainPer());
-		speedMult.setText("Speed Multiplier: " + tgm.getSpeedMult());
-
-		revalidate();
-		repaint();
+		speedMultLabel.setText("Speed Multiplier: " + tgm.getSpeedMult());
+		generationLabel.setText("Generation: " + brain.getGeneration());
+		bestScoreLabel.setText("Best Score: " + brain.getBestScore());
+		AVGLabel.setText("AVG: " + brain.getAVGScore());
+		bestFitnessLabel.setText("Best Fitness: " + brain.getBestFitness());
+		AVGFitnessLabel.setText("AVG: " + brain.getAVGFitness());
 	}
 
+	private void setUpUIManager() {
+		try {
+			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
 }
