@@ -77,6 +77,9 @@ public class MonitorWindow extends JFrame {
 		main.setLayout(new BoxLayout(main, BoxLayout.Y_AXIS));
 		main.setBorder(BorderFactory.createEmptyBorder(5, 15, 5, 15)); // Some insets
 		main.add(createFieldsPanel());
+		generationLabel = new JLabel("Generation: " + brain.getGeneration());
+		generationLabel.setAlignmentX(JLabel.CENTER_ALIGNMENT);
+		main.add(generationLabel);
 		completionLabel = new JLabel("Generation train: " + brain.getGenerationTrainPer());
 		completionLabel.setAlignmentX(JLabel.CENTER_ALIGNMENT);
 		main.add(completionLabel);
@@ -91,10 +94,8 @@ public class MonitorWindow extends JFrame {
 		JPanel scorePanel = new JPanel();
 		scorePanel.setBorder(BorderFactory.createTitledBorder("Score"));
 		scorePanel.setLayout(new BoxLayout(scorePanel, BoxLayout.Y_AXIS));
-		generationLabel = new JLabel("Generation: " + brain.getGeneration());
 		bestScoreLabel = new JLabel("Best Score: " + brain.getBestScore());
 		AVGLabel = new JLabel("AVG: " + brain.getAVGScore());
-		scorePanel.add(generationLabel);
 		scorePanel.add(bestScoreLabel);
 		scorePanel.add(AVGLabel);
 		p.add(scorePanel);
@@ -161,6 +162,7 @@ public class MonitorWindow extends JFrame {
 		AVGLabel.setText("AVG: " + brain.getAVGScore());
 		bestFitnessLabel.setText("Best Fitness: " + brain.getBestFitness());
 		AVGFitnessLabel.setText("AVG: " + brain.getAVGFitness());
+		completionLabel.setText("Generation train: " + brain.getGenerationTrainPer());
 	}
 
 	private void setUpUIManager() {
