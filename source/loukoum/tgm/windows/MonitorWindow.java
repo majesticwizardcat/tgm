@@ -131,9 +131,13 @@ public class MonitorWindow extends JFrame {
 
 		JButton setSpeedBtn = new JButton("Set");
 		setSpeedBtn.addActionListener(e -> {
+<<<<<<< HEAD
 			// Replace dots (JFormattedTextField represents 1000 as 1.000)
 			String numberString = speedMultField.getText().replaceAll("\\.", "");
 			tgm.changeMultSpeed(Integer.parseInt(numberString));
+=======
+			tgm.changeMultSpeed(Integer.parseInt(speedMultField.getText()));
+>>>>>>> origin
 			speedMultLabel.setText("Speed Multiplier: " + tgm.getSpeedMult());
 		});
 		p.add(setSpeedBtn);
