@@ -38,7 +38,7 @@ public class Renderer implements Runnable {
 		canvas.setSize(WIDTH, HEIGHT);
 		canvas.setPreferredSize(new Dimension(WIDTH, HEIGHT));
 
-		frame.addKeyListener(new Input());
+		canvas.addKeyListener(new Input());
 
 		frame.add(canvas);
 		canvas.createBufferStrategy(2);
